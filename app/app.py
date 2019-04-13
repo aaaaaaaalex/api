@@ -1,30 +1,15 @@
 from flask import Flask
-import json
-import grpc
 
-from TrainingService_pb2 import TrainRequest, TrainResponse, TrainingInstanceInfo, TrainingInstanceList, InstanceFilter
-from TrainingService_pb2_grpc import TrainingServiceStub
+from v1.admin import app as admin_api
+from v1.images import app as images_api
+#import views
 
 app = Flask(__name__)
+app.register_blueprint(admin_api)
+app.register_blueprint(images_api)
 
-trainingServiceChannel = grpc.insecure_channel("training_instance:8081")
-trainingService = TrainingServiceStub(trainingServiceChannel)
+#app.register_blueprint(views)
 
-@app.route('/')
-def newTrainingInstance ():
-    classlist = json.dumps(["airplane", "animal",
-                            "building", "car",
-                            "crowd", "dish_food",
-                            "drink", "flower",
-                            "house", "human",
-                            "musical_instrument",
-                            "plant", "shoe"])
-
-    res = trainingService.TrainModel(
-        TrainRequest(
-            classlist=classlist, 
-            classlist_locations="/thing, /thang, /nope"))
-    return res.response
 
 if __name__ == "__main__":
     try:

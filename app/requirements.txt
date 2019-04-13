@@ -1,2 +1,8 @@
 flask
 grpcio-tools
+mysql-connector
+keras
+numpy
+h5py
+image
+pandas
