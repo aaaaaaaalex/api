@@ -2,5 +2,5 @@
 */dataset/img/*
 */.DS_Store
 *.swp
-*/__pycache__
+**/__pycache__
 out
