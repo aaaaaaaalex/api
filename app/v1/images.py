@@ -2,6 +2,7 @@ from mysql import connector
 from flask import Blueprint, request
 from time import sleep
 import json
+import logging
 
 app = Blueprint('images-app', __name__, url_prefix='/v1')
 
@@ -14,7 +15,7 @@ while True:
             database='app'
         )
         cursor = db.cursor()
-        print("DB connection established!")
+        logging.info("DB connection established!")
         break
     except connector.errors.InterfaceError:
         sleep(5)
@@ -46,7 +47,7 @@ def addAllImages():
                                 """, (None, fmt_url, None))
                             imgID = cursor.lastrowid
 
-                            print("classID: {}, classname: {}, imgID: {}, fmt_url: {}".format(classID, classname, imgID, fmt_url))
+                            logging.debug("classID: {}, classname: {}, imgID: {}, fmt_url: {}".format(classID, classname, imgID, fmt_url))
                             cursor.execute("""
                                 INSERT INTO `ImageCategory`
                                     (icID, cID, imgID)

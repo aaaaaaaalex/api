@@ -34,7 +34,7 @@ def sayHello():
 @app.route('/spawnInstance', methods=["POST"])
 def newTrainingInstance ():
     classlist = request.form.getlist('class')
-    classlistjson = json.dumps(classlist)
+    classlistjson = json.dumps(classlist) if classlist else None
     checkpoint_name = request.form.get('checkpoint')
 
     res = trainingService.TrainModel(
