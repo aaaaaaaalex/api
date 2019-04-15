@@ -33,17 +33,11 @@ def sayHello():
 
 @app.route('/spawnInstance', methods=["POST"])
 def newTrainingInstance ():
-    classlist = json.dumps(["airplane", "animal",
-                            "building", "car",
-                            "crowd", "dish_food",
-                            "drink", "flower",
-                            "house", "human",
-                            "musical_instrument",
-                            "plant", "shoe"])
+    classlist = request.form.getlist('class')
+    classlistjson = json.dumps(classlist)
 
     res = trainingService.TrainModel(
         TrainRequest(
-            classlist=classlist
+            classlist=classlistjson
             ))
-
-    return res.response
+    return res.response 
