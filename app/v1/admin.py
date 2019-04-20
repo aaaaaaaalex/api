@@ -35,11 +35,13 @@ def sayHello():
 def newTrainingInstance ():
     classlist = request.form.getlist('class')
     classlistjson = json.dumps(classlist) if classlist else None
-    checkpoint_name = request.form.get('checkpoint')
+    checkpoint_name = request.form.get('checkpointName')
+    instance_name = request.form.get('instanceName')
 
     res = trainingService.TrainModel(
         TrainRequest(
             classlist=classlistjson,
-            checkpoint_name = checkpoint_name
+            checkpoint_name = checkpoint_name,
+            instance_name=instance_name
         ))
     return res.response 
