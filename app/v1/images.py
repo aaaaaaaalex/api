@@ -1,10 +1,19 @@
 from mysql import connector
 from flask import Blueprint, request
-from time import sleep
+from io import BytesIO
+from os import path, makedirs
+from PIL import Image as pimage, ImageFile
+from time import sleep, time
+
+
+
+
 import json
 import logging
 
 app = Blueprint('images-app', __name__, url_prefix='/v1')
+
+IMAGE_ASSETS_PATH = '/assets/images/'
 
 while True:
     try:
@@ -22,37 +31,50 @@ while True:
         continue
 
 
+# attempts to validate if a collection of bytes represents an image by parsing them with PIL.Image
+# throws an exception if the data cannot be parsed
+def __sanitise_image__(bytes_data):
+    buf = BytesIO(bytes_data)
+    img = pimage.open(buf)
+
+    # move data from original image into new image, dropping redundant metadata to save space / avoid warnings
+    buf_no_exif = BytesIO()
+    img_no_exif = pimage.new(img.mode, img.size)
+
+    img_no_exif.putdata( list(img.getdata()) )
+    img_no_exif.save(buf_no_exif, format="jpeg")
+
+    # drop all EXIF data as it is all redundant
+    return buf_no_exif.getvalue()
+
+
+# upload an image for a userID (not yet authenticated)
 @app.route('/newImage', methods=["POST"])
-def addAllImages():
-    URLS_path = "./dataset/url/{}/url.txt"
-    with open('./dataset/classes.config') as fd:
-        for cl in fd:
-            classname = cl.strip('\n')
-            if classname != '':
-                cursor.execute("""
-                    INSERT INTO `Category`
-                        (`cID`, `cName`) 
-                        VALUES (%s, %s);
-                    """, (None, classname))
-                classID = cursor.lastrowid
+def addUserImage():
+    imgdata = request.files['image']
+    userID = request.form.get('userID')
+    
+    # validate
+    #if userID is None : return json.dumps({'message': "Could not upload image: no userID given"}), 400
+    try:
+        imgdata = __sanitise_image__(imgdata.read())
+    except(OSError) as err:
+        return json.dumps({'message': "Could not upload image: image data is corrupted"}), 422
 
-                with open (URLS_path.format(classname)) as urls:
-                    for url in urls:
-                        if url != "":
-                            fmt_url = url.strip("\n\r")
-                            cursor.execute("""
-                                INSERT INTO `Img`
-                                    (`imgID`, `imgURL`, `userID`)
-                                    VALUES (%s, %s, %s)
-                                """, (None, fmt_url, None))
-                            imgID = cursor.lastrowid
+    # save
+    filepath = IMAGE_ASSETS_PATH + "{}/".format(userID) if userID else IMAGE_ASSETS_PATH + "0/"
+    filename = filepath + str(int(time())) + ".jpg"
+    if not path.exists(IMAGE_ASSETS_PATH): makedirs(IMAGE_ASSETS_PATH)
+    if not path.exists(filepath): makedirs(filepath)
 
-                            logging.debug("classID: {}, classname: {}, imgID: {}, fmt_url: {}".format(classID, classname, imgID, fmt_url))
-                            cursor.execute("""
-                                INSERT INTO `ImageCategory`
-                                    (icID, cID, imgID)
-                                    VALUES (%s, %s, %s)
-                                """, (None, classID, imgID))
+    with open(filename , 'wb') as f:
+        f.write(imgdata)
+
+    cursor.execute("""
+        INSERT INTO `Img`
+        (imgID, imgURL, userID)
+        VALUES (%s, %s, %s);
+    """, (None, filename, userID))
 
     db.commit()
     return "<html><body><h1>good job, you did it!</h1></body></html>"
