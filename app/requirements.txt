@@ -1,6 +1,7 @@
 flask
 grpcio-tools
 mysql-connector
+tensorflow
 keras
 numpy
 h5py
