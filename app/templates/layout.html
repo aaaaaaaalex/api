@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"> <!-- Compiled and minified materialize CSS -->
+    <link rel="stylesheet" href="/assets/style.css" />
+    <title>{% block title %}{% endblock %} - Eyes</title>
+
+    {% endblock %}
+</head>
+<body>
+    <div class="navbar-fixed">
+        <nav>
+            <div class="nav-wrapper">
+            <a href="#!" class="brand-logo">Logo</a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="sass.html">Sass</a></li>
+            </ul>
+            </div>
+        </nav>
+    </div>
+    <div id="content container">{% block content %}{% endblock %}</div>
+    <div id="footer">
+        {% block footer %}
+        <footer class="page-footer">
+            <div class="footer-copyright">
+                <div class="container center">
+                    © 2019 Copyright Alex O'Regan
+                </div>
+            </div>
+        </footer>
+                  
+        {% endblock %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    </div>
+</body>
+</html>

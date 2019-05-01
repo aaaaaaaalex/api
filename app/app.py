@@ -2,14 +2,13 @@ from flask import Flask
 
 from v1.admin import app as admin_api
 from v1.images import app as images_api
-#import views
+from web.views import app as views_api
 import logging
 
 app = Flask(__name__)
 app.register_blueprint(admin_api)
 app.register_blueprint(images_api)
-
-#app.register_blueprint(views)
+app.register_blueprint(views_api)
 
 
 if __name__ == "__main__":

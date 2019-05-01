@@ -44,4 +44,10 @@ def newTrainingInstance ():
             checkpoint_name = checkpoint_name,
             instance_name=instance_name
         ))
-    return res.response 
+    instance_name = res.instance_name
+    return json.dumps({'response': res.response, 'instance_name': instance_name })
+
+
+@app.route('/changeModel', methods=['POST'])
+def changeModel():
+    return "sddf"

@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+    <h1>View your image</h1>
+
+    <div class='container'>
+        <div class='row'>
+            <div id='imageView' class='col s8' data-imgID='{{img.imgID}}'>
+                <img src='{{img.imgURL}}'>
+            </div>
+
+            <div id='classView' class='col s4'>
+            {% for tag in img.tags %}
+                <span>{{tag.name}}: {{tag.proba}}</span>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

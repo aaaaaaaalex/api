@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+    <h1>Index</h1>
+    <p class="important">
+      Welcome to the homepage.
+    </p>
+
+    <div class='container'>
+      <form method=POST action='/v1/newImage' enctype="multipart/form-data">
+          <input type=file name='image' />
+          <button type=submit> Classify! </button>
+      </form>
+    </div>
+{% endblock %}

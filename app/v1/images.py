@@ -1,5 +1,5 @@
 from mysql import connector
-from flask import Blueprint, request
+from flask import Blueprint, request, render_template
 from io import BytesIO
 from keras.backend import clear_session
 from keras.models import model_from_json
@@ -13,7 +13,6 @@ from time import sleep, time
 import json
 import logging
 import numpy as np
-
 
 class Predictor:
     def __init__(self, config):
@@ -46,7 +45,7 @@ class Predictor:
         
         model = model_from_json(arch_json)
         model.load_weights(weights_path)
-        model.compile(optimizer=SGD(lr=0.01, decay=0.0009), loss="categorical_crossentropy", metrics=['categorical_accuracy'])
+        #model.compile(optimizer=SGD(lr=0.01, decay=0.0009), loss="categorical_crossentropy", metrics=['categorical_accuracy'])
 
         self.classifier = model
         return model
@@ -64,9 +63,7 @@ class Predictor:
         highest_classes = [self.classlist[idx] for idx in highest]
         highest_probs   = [prediction[idx] for idx in highest]
 
-
         return (highest_classes, highest_probs)
-
 
 
 # connect database
@@ -86,13 +83,15 @@ while True:
         continue
 
 # config
-IMAGE_ASSETS_DIR = '/assets/images/'
 CONFIG_DIR = './'
 with open(CONFIG_DIR+'config.json') as config_file:
     CONFIG = json.loads(config_file.read())
+
+IMAGE_ASSETS_DIR = './assets/images/'
 PREDICTOR = Predictor(CONFIG)
 
 app = Blueprint('images-app', __name__, url_prefix='/v1')
+
 
 # attempts to validate if a collection of bytes represents an image by parsing them with PIL.Image
 # throws an exception if the data cannot be parsed
@@ -111,43 +110,7 @@ def __sanitise_image__(bytes_data):
     return buf_no_exif.getvalue()
 
 
-# upload an image for a userID (not yet authenticated)
-@app.route('/newImage', methods=["POST"])
-def addUserImage():
-    imgdata = request.files['image']
-    userID = request.form.get('userID')
-    
-    # validate
-    #if userID is None : return json.dumps({'message': "Could not upload image: no userID given"}), 400
-    try:
-        imgdata = __sanitise_image__(imgdata.read())
-    except(OSError) as err:
-        return json.dumps({'message': "Could not upload image: image data is corrupted"}), 422
-
-    # save
-    filepath = IMAGE_ASSETS_DIR + "{}/".format(userID) if userID else IMAGE_ASSETS_DIR + "0/"
-    filename = filepath + str(int(time())) + ".jpg"
-    if not path.exists(IMAGE_ASSETS_DIR): makedirs(IMAGE_ASSETS_DIR)
-    if not path.exists(filepath): makedirs(filepath)
-
-    with open(filename , 'wb') as f:
-        f.write(imgdata)
-
-    cursor.execute("""
-        INSERT INTO `Img`
-        (imgID, imgURL, userID)
-        VALUES (%s, %s, %s);
-    """, (None, filename, userID))
-
-    db.commit()
-    return json.dumps(cursor.lastrowid)
-
-
-@app.route('/getTags', methods=["GET"])
-def predictImage():
-    #clear_session()
-    imgID = request.args['imgID']
-
+def predictImage(imgID):
     cursor.execute("""
         SELECT imgURL FROM `Img`
         WHERE imgID = {}
@@ -157,7 +120,7 @@ def predictImage():
     if not imgURL: return json.dumps({'message' : "Could not classify image, image with ID {} does not exist".format(imgID)}), 422
     else: imgURL = imgURL[0]
 
-    img     = k_image.load_img(imgURL, target_size=(224,224))
+    img     = k_image.load_img( IMAGE_ASSETS_DIR+imgURL, target_size=(224,224))
     x_input = k_image.img_to_array(img)
     x_input = np.expand_dims(x_input, axis=0)
     x_input_norm = x_input/255
@@ -186,7 +149,48 @@ def predictImage():
             """, (None, classid, imgID))
 
     db.commit()
-    return json.dumps(class_probas)
+    return class_probas
+
+
+# upload an image for a userID (not yet authenticated)
+@app.route('/newImage', methods=["POST"])
+def addUserImage():
+    imgdata = request.files['image']
+    userID = request.form.get('userID')
+    
+    # validate
+    #if userID is None : return json.dumps({'message': "Could not upload image: no userID given"}), 400
+    try:
+        imgdata = __sanitise_image__(imgdata.read())
+    except(OSError) as err:
+        return json.dumps({'message': "Could not upload image: image data is corrupted"}), 422
+
+    # save
+    relative_filepath = "{}/".format(userID) if userID else "0/"
+    relative_filename = relative_filepath + str(int(time())) + ".jpg"
+
+    local_filepath = IMAGE_ASSETS_DIR + relative_filepath
+    local_filename = IMAGE_ASSETS_DIR + relative_filename
+
+    if not path.exists(IMAGE_ASSETS_DIR): makedirs(IMAGE_ASSETS_DIR)
+    if not path.exists(local_filepath): makedirs(local_filepath)
+
+    with open(local_filename , 'wb') as f:
+        f.write(imgdata)
+
+    cursor.execute("""
+        INSERT INTO `Img`
+        (imgID, imgURL, userID)
+        VALUES (%s, %s, %s);
+    """, (None, relative_filename, userID))
+    db.commit()
+
+    imgID = cursor.lastrowid
+    predictions = predictImage(imgID)
+    return json.dumps({
+        'imgID': imgID,
+        'predictions': predictions
+    })
 
 
 @app.route('/newCategory', methods=["POST"])
