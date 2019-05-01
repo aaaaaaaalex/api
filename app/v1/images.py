@@ -13,6 +13,7 @@ from time import sleep, time
 import json
 import logging
 import numpy as np
+import operator
 
 class Predictor:
     def __init__(self, config):
@@ -23,6 +24,7 @@ class Predictor:
         self.models_dir = '/instances/'
         self.classifier = None
         self.classlist  = None
+        self.minCertainty = 0.2
 
 
     def __classlist__(self):
@@ -51,17 +53,18 @@ class Predictor:
         return model
 
 
-    def predict(self, x_input, n_highest=5):
+    def predict(self, x_input):
         if not self.classifier: self.__classifier__()
-        prediction = self.classifier.predict(x_input)[0].astype(float)
-
-        # get N highest classes
         if not self.classlist: self.__classlist__()
-        if len(self.classlist) < n_highest : n_highest = len(self.classlist)-1
+        
+        prediction = self.classifier.predict(x_input)[0].astype(float)
+        highest = sorted(
+                    zip(self.classlist, prediction),
+                    key=operator.itemgetter(1),
+                    reverse=True)
 
-        highest = np.argpartition(prediction, n_highest)
-        highest_classes = [self.classlist[idx] for idx in highest]
-        highest_probs   = [prediction[idx] for idx in highest]
+        highest_classes = ([proba[0] for proba in highest if proba[1] > self.minCertainty])
+        highest_probs   = ([proba[1] for proba in highest if proba[1] > self.minCertainty])
 
         return (highest_classes, highest_probs)
 
