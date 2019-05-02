@@ -1,9 +1,14 @@
 from flask import Flask
+import logging
+
+import settings
+settings.init()
 
 from v1.admin import app as admin_api
 from v1.images import app as images_api
 from web.views import app as views_api
-import logging
+
+
 
 app = Flask(__name__)
 app.register_blueprint(admin_api)

@@ -1,9 +1,15 @@
-from os import path
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, send_from_directory
 from jinja2.exceptions import TemplateNotFound
+from mysql import connector
+from os import path
+from settings import GLOBALS
+import logging
+
 
 app = Blueprint('views-app', __name__)
 
+cursor = GLOBALS['db'].cursor()
+ASSETS_DIR = "./assets/"
 
 @app.route('/', methods=["GET"])
 def index():
@@ -18,14 +24,19 @@ def getPage(path):
         return render_template('404.html'), 404
 
 
-@app.route('/assets/<path>', methods=["GET"])
+@app.route('/assets/<path:path>', methods=["GET"])
 def getAsset(path):
-    if not path: path = "index.html"
-    try:
-        mime_type = "text/css; charset=utf-8" if path.endswith('.css') else "text/html; charset=utf-8"
-        with open('./assets/'+path, 'rb') as asset:
-            asset_bytes = asset.read()
-            return asset_bytes, 200, {'Content-Type': mime_type}
+    return send_from_directory(ASSETS_DIR, path)
 
-    except OSError:
-        return render_template('404.html'), 404
+
+@app.route('/images/<imgID>', methods=["GET"])
+def showImage(imgID):
+    cursor.execute("""
+        SELECT imgURL FROM Img
+        WHERE imgID = {};
+    """.format(imgID))
+
+    imgURL = cursor.fetchone()
+    if not imgURL: return render_template('404.html'), 404
+
+    return imgURL[0]
