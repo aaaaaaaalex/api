@@ -8,6 +8,7 @@ from keras.preprocessing import image as k_image
 from os import path, makedirs, environ, walk
 from PIL import Image as pimage, ImageFile
 from time import sleep, time
+from datetime import datetime
 
 import json
 import logging
@@ -95,6 +96,7 @@ def predictImage(imgID):
 # upload an image for a userID (not yet authenticated)
 @app.route('/newImage', methods=["POST"])
 def addUserImage():
+    now = time()
     imgdata = request.files['image']
     userID = request.form.get('userID')
     
@@ -127,6 +129,12 @@ def addUserImage():
 
     imgID = cursor.lastrowid
     predictions = predictImage(imgID)
+
+    then = time()
+    diff = then-now
+
+    print(diff)
+
     return json.dumps({
         'imgID': imgID,
         'imgURL': '/assets/images/{}'.format(relative_filename),
