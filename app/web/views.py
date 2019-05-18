@@ -35,8 +35,24 @@ def showImage(imgID):
         SELECT imgURL FROM Img
         WHERE imgID = {};
     """.format(imgID))
-
     imgURL = cursor.fetchone()
-    if not imgURL: return render_template('404.html'), 404
 
-    return imgURL[0]
+    if not imgURL: return render_template('404.html'), 404
+    else: imgURL = imgURL[0]
+
+    
+    cursor.execute("""
+        SELECT c.cName from Category c, ImageCategory ic
+        WHERE c.cID = ic.cID
+            AND ic.imgID = {};
+    """.format(imgID))
+    categories = cursor.fetchall()
+    if categories: categories = [c[0] for c in categories] # unpack categories
+    
+    img = {
+        'imgID': imgID,
+        'imgURL': imgURL,
+        'tags': categories
+    }
+
+    return render_template('imageview.html', img=img)

@@ -7,7 +7,6 @@ from keras.optimizers import SGD
 from keras.preprocessing import image as k_image
 from os import path, makedirs, environ, walk
 from PIL import Image as pimage, ImageFile
-from tensorflow import logging as tflogging
 from time import sleep, time
 
 import json
@@ -130,6 +129,7 @@ def addUserImage():
     predictions = predictImage(imgID)
     return json.dumps({
         'imgID': imgID,
+        'imgURL': '/assets/images/{}'.format(relative_filename),
         'predictions': predictions
     })
 
@@ -141,5 +141,5 @@ def newClass():
 
 @app.route('/getTags', methods=["GET"])
 def getTags():
-
+    
     return tags

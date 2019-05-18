@@ -21,3 +21,4 @@ def init():
             continue
 
     GLOBALS['db'] = db
+    return

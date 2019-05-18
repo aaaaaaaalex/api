@@ -15,6 +15,8 @@ class Predictor:
         self.classlist  = None
         self.minCertainty = 0.2
 
+        self.__classifier__()
+
 
     def __classlist__(self):
         classes_path = self.models_dir + self.currentModel + '/dataset'
@@ -37,7 +39,8 @@ class Predictor:
         model = model_from_json(arch_json)
         model.load_weights(weights_path)
         #model.compile(optimizer=SGD(lr=0.01, decay=0.0009), loss="categorical_crossentropy", metrics=['categorical_accuracy'])
-
+        
+        model._make_predict_function()
         self.classifier = model
         return model
 
