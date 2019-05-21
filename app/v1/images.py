@@ -7,20 +7,17 @@ from keras.optimizers import SGD
 from keras.preprocessing import image as k_image
 from os import path, makedirs, environ, walk
 from PIL import Image as pimage, ImageFile
-from time import sleep, time
 from datetime import datetime
 
 import json
 import logging
 import numpy as np
 import operator
-
+import time
 
 # project objects
 from predictor import Predictor
 from settings import GLOBALS
-
-
 cursor = GLOBALS['db'].cursor()
 
 # config
@@ -96,7 +93,7 @@ def predictImage(imgID):
 # upload an image for a userID (not yet authenticated)
 @app.route('/newImage', methods=["POST"])
 def addUserImage():
-    now = time()
+    now = time.time()
     imgdata = request.files['image']
     userID = request.form.get('userID')
     
@@ -109,7 +106,7 @@ def addUserImage():
 
     # save
     relative_filepath = "{}/".format(userID) if userID else "0/"
-    relative_filename = relative_filepath + str(int(time())) + ".jpg"
+    relative_filename = relative_filepath + str(int(time.time())) + ".jpg"
 
     local_filepath = IMAGE_ASSETS_DIR + relative_filepath
     local_filename = IMAGE_ASSETS_DIR + relative_filename
@@ -122,15 +119,15 @@ def addUserImage():
 
     cursor.execute("""
         INSERT INTO `Img`
-        (imgID, imgURL, userID)
-        VALUES (%s, %s, %s);
-    """, (None, relative_filename, userID))
+        (imgID, imgURL, userID, imgDatetime)
+        VALUES (%s, %s, %s, %s);
+    """, (None, relative_filename, userID, time.strftime("%Y-%m-%d %H:%M:%S")))
     GLOBALS['db'].commit()
 
     imgID = cursor.lastrowid
     predictions = predictImage(imgID)
 
-    then = time()
+    then = time.time()
     diff = then-now
 
     print(diff)

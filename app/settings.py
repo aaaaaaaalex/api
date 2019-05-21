@@ -1,4 +1,5 @@
 from mysql import connector
+from time import sleep
 import logging
 
 def init():    

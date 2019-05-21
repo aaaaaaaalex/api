@@ -9,13 +9,52 @@ import logging
 
 app = Blueprint('views-app', __name__)
 
-cursor = GLOBALS['db'].cursor()
-ASSETS_URL = "/assets/"
+cursor = GLOBALS['db'].cursor(buffered=True)
+IMAGES_URL = "/assets/images/"
 ASSETS_DIR = "./assets/"
+
+
+def getRecentImages(num_images=40):
+    cursor.execute("""
+        SELECT imgID, userID, imgURL, imgDateTime
+        FROM Img
+        ORDER BY imgDateTime DESC;
+        """)
+    
+    imgs = cursor.fetchmany(num_images)
+    cursor.fetchall()
+    print(imgs)
+
+    return imgs
+
+
+
+def getTrainedModels(num_models=-1):
+    cursor.execute("""
+        SELECT modelAccuracy, modelDateCreated, modelURL, modelName
+        FROM Model;
+    """)
+
+    if num_models > 0:
+        models = cursor.fetchall()
+    else:
+        models = (cursor.fetchmany(num_models))
+        cursor.fetchall()
+
+    return models
+
 
 @app.route('/', methods=["GET"])
 def index():
+    getRecentImages()
+
     return render_template('index.html')
+
+
+@app.route('/dashboard', methods=["GET"])
+def showDashboard():
+    models = getTrainedModels()
+    return models
 
 
 @app.route('/<path>', methods=["GET"])
@@ -44,7 +83,7 @@ def showImage(imgID):
 
     hostname = urlparse(imgURL).hostname or None
     if hostname is None:
-        imgURL = ASSETS_URL + imgURL
+        imgURL = IMAGES_URL + imgURL
 
 
     cursor.execute("""
