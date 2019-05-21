@@ -1,5 +1,5 @@
 from mysql import connector
-from flask import Blueprint, request, render_template
+from flask import Blueprint, request, render_template, redirect
 from io import BytesIO
 from keras.backend import clear_session
 from keras.models import model_from_json
@@ -93,7 +93,6 @@ def predictImage(imgID):
 # upload an image for a userID (not yet authenticated)
 @app.route('/newImage', methods=["POST"])
 def addUserImage():
-    now = time.time()
     imgdata = request.files['image']
     userID = request.form.get('userID')
     
@@ -127,10 +126,6 @@ def addUserImage():
     imgID = cursor.lastrowid
     predictions = predictImage(imgID)
 
-    then = time.time()
-    diff = then-now
-
-    print(diff)
 
     return json.dumps({
         'imgID': imgID,
@@ -139,12 +134,51 @@ def addUserImage():
     })
 
 
-@app.route('/newCategory', methods=["POST"])
-def newClass():
-    return "<html><body><h1>Ouch, I <strong>stubbed</strong> my toe! :(</h1></body></html>"
+# edit image tags
+@app.route('/newTags', methods=["POST"])
+def editImageTags():
+    imgID = request.form.get('imgID')
+    addedTagsNames = request.form.getlist('addTag')
+    removedTags = request.form.getlist('removeTag')
+
+    if len(removedTags) > 0:
+        stringFormatters = ','.join(['%s'] * len(removedTags))
+        # remove specified tags
+        cursor.execute("""
+                DELETE FROM ImageCategory
+                WHERE cID in ({}) and imgID = "{}";
+            """.format(stringFormatters, imgID), tuple(removedTags) )
+
+        GLOBALS['db'].commit()
 
 
-@app.route('/getTags', methods=["GET"])
-def getTags():
+    # add new tags
+    if len(addedTagsNames) > 0:
+        for tagName in addedTagsNames:
+            # get id of tags with name tagName
+            cursor.execute("""
+                    SELECT cID FROM Category
+                    WHERE cName="{}";
+            """.format(tagName))
+
+            tagID = cursor.fetchone()
+            if tagID: tagID = tagID[0]
+
+            else:
+                # if no tag exists, make it (this is really inefficient)
+                cursor.execute("""
+                    INSERT INTO Category (cID, cName)
+                    VALUES (%s, %s);
+                """, (None, tagName))
+
+                GLOBALS['db'].commit()
+                tagID = cursor.lastrowid
+
+            # insert tag relationship
+            cursor.execute("""
+                    INSERT INTO ImageCategory ( icID, cID, imgID )
+                    VALUES (%s, %s, %s);
+                """, (None, tagID, imgID))
     
-    return tags
+    GLOBALS['db'].commit()
+    return "Success"

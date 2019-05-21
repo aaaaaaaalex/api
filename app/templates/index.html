@@ -4,15 +4,24 @@
     {{ super() }}
 {% endblock %}
 {% block content %}
-    <h1>Index</h1>
-    <p class="important">
-      Welcome to the homepage.
-    </p>
+  <h3>Latest Uploads:</h3>
 
-    <div class='container'>
-      <form method=POST action='/v1/newImage' enctype="multipart/form-data">
-          <input type=file name='image' />
-          <button type=submit> Classify! </button>
-      </form>
-    </div>
+  <input id="fileInput" type=file name='image' />
+
+  <div class="row margin-top">
+    {% for img in imgs %}
+      <div class="col s4">
+        <a href="{{ img.href }}">
+          <img class="card" src="{{ img.src }}">
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="/assets/js/classifyImageForm.js"></script>
+
 {% endblock %}

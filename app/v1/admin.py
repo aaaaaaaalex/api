@@ -11,6 +11,7 @@ trainingService = TrainingServiceStub(trainingServiceChannel)
 
 app = Blueprint('admin-app', __name__, url_prefix='/v1')
 
+
 quotes = [
     "Gentlemen, you can't fight in here! This is the War Room.",
     "...Nobody calls me Lebowski. You got the wrong guy. I'm the Dude, man.",

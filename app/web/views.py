@@ -4,6 +4,7 @@ from mysql import connector
 from os import path
 from settings import GLOBALS
 from urllib.parse import urlparse
+import json
 import logging
 
 
@@ -14,7 +15,15 @@ IMAGES_URL = "/assets/images/"
 ASSETS_DIR = "./assets/"
 
 
-def getRecentImages(num_images=40):
+def parseImgSrc(imgURL):
+    hostname = urlparse(imgURL).hostname or None
+    if hostname is None:
+        imgURL = IMAGES_URL + imgURL
+
+    return imgURL
+
+
+def getRecentImages(num_images=15):
     cursor.execute("""
         SELECT imgID, userID, imgURL, imgDateTime
         FROM Img
@@ -23,38 +32,71 @@ def getRecentImages(num_images=40):
     
     imgs = cursor.fetchmany(num_images)
     cursor.fetchall()
-    print(imgs)
 
     return imgs
 
 
+def getPopularTags(num_tags=-1):
+    cursor.execute("""
+        SELECT c.cName, count(ic.imgID) imgCount
+        FROM Category c, ImageCategory ic
+        WHERE c.cID = ic.cID
+        GROUP BY c.cID
+        ORDER BY imgCount DESC;
+    """)
+
+    if num_tags < 1: tags = cursor.fetchall()
+    else:
+        tags = cursor.fetchmany(num_tags)
+        cursor.fetchall()
+
+    return tags
+
 
 def getTrainedModels(num_models=-1):
     cursor.execute("""
-        SELECT modelAccuracy, modelDateCreated, modelURL, modelName
+        SELECT modelCAccuracy, modelDateCreated, modelURL, modelName
         FROM Model;
     """)
 
     if num_models > 0:
-        models = cursor.fetchall()
+        models = cursor.fetchmany(num_models)
     else:
-        models = (cursor.fetchmany(num_models))
-        cursor.fetchall()
+        models = cursor.fetchall()
 
     return models
 
 
 @app.route('/', methods=["GET"])
 def index():
-    getRecentImages()
+    imgs = getRecentImages()
+    imgs = [{
+        'href': "/images/{}".format(img[0]),
+        'src' : parseImgSrc(img[2])
+        } for img in imgs]
 
-    return render_template('index.html')
+    return render_template('index.html', imgs=imgs)
 
 
 @app.route('/dashboard', methods=["GET"])
 def showDashboard():
     models = getTrainedModels()
-    return models
+    models = [{
+        'modelCAccuracy': m[0],
+        'modelDateCreated': m[1].strftime('%Y-%m-%d %H:%M:%S'),
+        'modelURL': m[2],
+        'modelName': m[3] } for m in models]
+
+    popularTags = getPopularTags(num_tags=6)
+    popularTags = [{
+            'name': t[0],
+            'count': t[1]} for t in popularTags ]
+
+    return render_template('adminDashboard.html', 
+                                args={
+                                    'models': models,
+                                    'tags'  : popularTags
+                                    })
 
 
 @app.route('/<path>', methods=["GET"])
@@ -80,19 +122,17 @@ def showImage(imgID):
 
     if not imgURL: return render_template('404.html'), 404
     else: imgURL = imgURL[0]
-
-    hostname = urlparse(imgURL).hostname or None
-    if hostname is None:
-        imgURL = IMAGES_URL + imgURL
-
+    imgURL = parseImgSrc(imgURL)
 
     cursor.execute("""
-        SELECT c.cName from Category c, ImageCategory ic
+        SELECT c.cName, c.cID from Category c, ImageCategory ic
         WHERE c.cID = ic.cID
             AND ic.imgID = {};
     """.format(imgID))
     categories = cursor.fetchall()
-    if categories: categories = [c[0] for c in categories] # unpack categories
+    if categories: categories = [{
+                            'name':c[0],
+                            'id':c[1]} for c in categories] # unpack categories
     
     img = {
         'imgID': imgID,
