@@ -13,7 +13,6 @@ col img {
 
 .imageTag {
     max-width: 100%;
-    background-color: #9C6095;
     color: white;
     font-weight: 600;
     font-size: 1.2rem;
@@ -48,4 +47,9 @@ i[data-type=close] {
 
 .p-1 {
     padding: 1rem;
+}
+
+.ph-1 {
+    padding-left: 1rem;
+    padding-right: 1rem;
 }

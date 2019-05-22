@@ -20,13 +20,8 @@ from predictor import Predictor
 from settings import GLOBALS
 cursor = GLOBALS['db'].cursor()
 
-# config
-CONFIG_DIR = './'
-with open(CONFIG_DIR+'config.json') as config_file:
-    CONFIG = json.loads(config_file.read())
-
 IMAGE_ASSETS_DIR = './assets/images/'
-PREDICTOR = Predictor(CONFIG)
+PREDICTOR = Predictor(GLOBALS['config'])
 
 app = Blueprint('images-app', __name__, url_prefix='/v1')
 
@@ -88,6 +83,14 @@ def predictImage(imgID):
 
     GLOBALS['db'].commit()
     return class_probas
+
+
+
+@app.route('/switchModel/<modelName>', methods=['GET'])
+def changeClassifier(modelName):
+    clear_session()
+    PREDICTOR = Predictor({'currentModel': modelName})
+    return redirect('/dashboard', 302)
 
 
 # upload an image for a userID (not yet authenticated)

@@ -4,7 +4,6 @@ from mysql import connector
 from os import path
 from settings import GLOBALS
 from urllib.parse import urlparse
-import json
 import logging
 
 
@@ -92,11 +91,20 @@ def showDashboard():
             'name': t[0],
             'count': t[1]} for t in popularTags ]
 
-    return render_template('adminDashboard.html', 
-                                args={
-                                    'models': models,
-                                    'tags'  : popularTags
-                                    })
+    args = {
+            'models'  : models,
+            'tags'    : popularTags }
+
+    # find the current model
+    curModel = None
+    for m in models:
+        if m['modelName'] == (GLOBALS['config'])['currentModel']:
+            curModel = m
+
+    if curModel is not None:
+        args['curModel'] = curModel
+
+    return render_template('adminDashboard.html', args=args)
 
 
 @app.route('/<path>', methods=["GET"])

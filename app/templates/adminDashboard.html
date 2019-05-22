@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block content %}
+<div class="row">
+    <h4>Most popular tags:</h4>
+    {% for t in args.tags %}
+    <div class='col s4'>
+        <span class='col s12 imageTag card deep-orange lighten-2'>
+            <span>{{t.name}}:</span> <span class="right">{{t.count}} images</span>
+        </span>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="">
+    <div class='row'><h4>Models:</h4>
+        <!--- modal trigger --->
+        <a id='newModel' class="btn-floating indigo lighten-2 modal-trigger" href="#modal1"><i class="material-icons">add</i></a>
+    </div>
+
+    <ul class="collapsible">
+        {% if 'curModel' in args %}
+        <li>
+            <div class="collapsible-header"><i class="material-icons green-text">radio_button_checked</i>
+                <span class='ph-1'>Name: {{args.curModel.name}}</span>
+                <span class='ph-1'>Categorical Accuracy: {{args.curModel.modelCAccuracy}}</span>
+                <span class='ph-1'>Created: {{args.curModel.dateCreated}}</span>
+            </div>
+            <div class="collapsible-body">
+                <span>Lorem ipsum dolor sit amet.</span>
+            </div>
+        </li>
+        {% endif %}
+
+        {% for m in args.models %}
+        <li>
+            <div class="collapsible-header"><i class="material-icons">label</i>
+                <span class='ph-1'>Name: {{m.modelName}}</span>
+                <span class='ph-1'>Categorical Accuracy: {{m.modelCAccuracy}}</span>
+                <span class='ph-1'>Created: {{m.modelDateCreated}}</span>
+            </div>
+            <div class="collapsible-body">
+                <span>Lorem ipsum dolor sit amet.</span>
+                <a id='newModel' href="/v1/switchModel/{{m.modelName}}" class="btn-flat indigo lighten-2">Enable</a>
+            </div>
+        </li>
+
+        {% endfor %}
+
+    </ul>
+</div>
+
+
+
+<!-- Modal Structure -->
+<div id="modal1" class="modal">
+    <div class="modal-content">
+        <h4>New Model</h4>
+        <label for='classes'>Classnames (e.g. 'car,dog,street' )</label>
+        <input id="classes" type=text>
+        <button id="submitNewModel" class="btn-large deep-orange">Create</button>
+    </div>
+
+    <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect btn-flat">Cancel</a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="/assets/js/dashboard.js"></script>
+
+{% endblock %}

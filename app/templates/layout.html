@@ -12,7 +12,7 @@
     {% endblock %}
 </head>
 <body>
-    <div class="navbar-fixed">
+    <div class="navbar-fixed-top">
         <nav>
             <div class="nav-wrapper indigo">
             <a href="/" class="brand-logo">Eyes</a>
@@ -38,6 +38,21 @@
 </body>
 
 <script src="/assets/js/api.js"></script>
+
+<script>
+// materialize init stuff
+
+document.addEventListener('DOMContentLoaded', function() {
+var elems = document.querySelectorAll('.collapsible');
+var instances = M.Collapsible.init(elems);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('.modal');
+    var instances = M.Modal.init(elems);
+});
+</script>
+
 {% block scripts %}
 
 {% endblock %}

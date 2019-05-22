@@ -41,11 +41,12 @@ def newTrainingInstance ():
 
     res = trainingService.TrainModel(
         TrainRequest(
-            classlist=classlistjson,
+            classlist = classlistjson,
             checkpoint_name = checkpoint_name,
-            instance_name=instance_name
+            instance_name = instance_name
         ))
     instance_name = res.instance_name
+
     return json.dumps({'response': res.response, 'instance_name': instance_name })
 
 
